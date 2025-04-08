@@ -114,11 +114,12 @@ app.delete("/api/user/history/:id", passport.authenticate("jwt", { session: fals
     })
 });
 
-userService.connect()
-.then(() => {
-    app.listen(HTTP_PORT, () => { console.log("API listening on: " + HTTP_PORT) });
-})
-.catch((err) => {
-    console.log("unable to start the server: " + err);
-    process.exit();
-});
+module.exports = async (req, res) => {
+    try {
+      await userService.connect();
+      app(req, res);
+    } catch (err) {
+      console.error("Failed to start server:", err);
+      res.status(500).send("Internal Server Error");
+    }
+  };
