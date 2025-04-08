@@ -5,6 +5,7 @@ let mongoDBConnectionString = process.env.MONGO_URL;
 
 let Schema = mongoose.Schema;
 
+
 let userSchema = new Schema({
     userName: {
         type: String,
@@ -15,22 +16,24 @@ let userSchema = new Schema({
     history: [String]
 });
 
-let User;
+let User = null;
 
 module.exports.connect = function () {
     return new Promise(function (resolve, reject) {
-        let db = mongoose.createConnection(mongoDBConnectionString);
-
-        db.on('error', err => {
-            reject(err);
-        });
-
-        db.once('open', () => {
-            User = db.model("users", userSchema);
-            resolve();
-        });
+        mongoose.connect(mongoDBConnectionString)
+            .then(() => {
+                // Only define model if it hasn't been defined yet
+                if (!mongoose.models.User) {
+                    User = mongoose.model("User", userSchema);
+                } else {
+                    User = mongoose.models.User;
+                }
+                resolve();
+            })
+            .catch(err => reject(err));
     });
 };
+
 
 module.exports.registerUser = function (userData) {
     return new Promise(function (resolve, reject) {
