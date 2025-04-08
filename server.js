@@ -116,13 +116,12 @@ app.delete("/api/user/history/:id", passport.authenticate("jwt", { session: fals
 
 // INIT DB and START SERVER
 
-userService.connect()
-  .then(() => {
-    app.listen(HTTP_PORT, () => {
-      console.log("API listening on: " + HTTP_PORT);
-    });
-  })
-  .catch((err) => {
-    console.log("unable to start the server: " + err);
-    process.exit();
-  });
+module.exports = async (req, res) => {
+    try {
+      await userService.connect();
+      app(req, res); // forward request to Express
+    } catch (err) {
+      console.error("Server error:", err);
+      res.status(500).send("Internal Server Error");
+    }
+  };
