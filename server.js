@@ -115,13 +115,12 @@ app.delete("/api/user/history/:id", passport.authenticate("jwt", { session: fals
 });
 
 // INIT DB and START SERVER
-
 module.exports = async (req, res) => {
     try {
-      await userService.connect();
-      app(req, res); // forward request to Express
+      await userService.connect(); // Ensure DB connection before handling
+      return app(req, res); // Pass request to Express
     } catch (err) {
-      console.error("Server error:", err);
-      res.status(500).send("Internal Server Error");
+      console.error("Failed to connect to DB:", err);
+      res.status(500).send("Server error");
     }
   };
