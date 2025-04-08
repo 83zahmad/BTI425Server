@@ -1,16 +1,12 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-let mongoDBConnectionString = process.env.MONGO_URL;
+const mongoDBConnectionString = process.env.MONGO_URL;
 
-let Schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
-
-let userSchema = new Schema({
-    userName: {
-        type: String,
-        unique: true
-    },
+const userSchema = new Schema({
+    userName: { type: String, unique: true },
     password: String,
     favourites: [String],
     history: [String]
@@ -18,22 +14,15 @@ let userSchema = new Schema({
 
 let User = null;
 
-module.exports.connect = function () {
-    return new Promise(function (resolve, reject) {
-        mongoose.connect(mongoDBConnectionString)
-            .then(() => {
-                // Only define model if it hasn't been defined yet
-                if (!mongoose.models.User) {
-                    User = mongoose.model("User", userSchema);
-                } else {
-                    User = mongoose.models.User;
-                }
-                resolve();
-            })
-            .catch(err => reject(err));
-    });
-};
+// ✅ Async connect function
+module.exports.connect = async function () {
+    if (mongoose.connection.readyState === 1 && User) return; // already connected and model ready
 
+    await mongoose.connect(mongoDBConnectionString);
+
+    // Register model once
+    User = mongoose.models.User || mongoose.model("User", userSchema);
+};
 
 module.exports.registerUser = function (userData) {
     return new Promise(function (resolve, reject) {

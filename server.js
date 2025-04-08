@@ -114,4 +114,12 @@ app.delete("/api/user/history/:id", passport.authenticate("jwt", { session: fals
     })
 });
 
-module.exports = app; 
+module.exports = async (req, res) => {
+    try {
+      await userService.connect(); // ✅ Always connect before any model access
+      app(req, res); // ✅ Then route the request
+    } catch (err) {
+      console.error("Connection error:", err);
+      res.status(500).send("Internal Server Error");
+    }
+  };
