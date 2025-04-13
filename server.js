@@ -18,6 +18,9 @@ const jwtOptions = {
   secretOrKey: process.env.JWT_SECRET
 };
 
+// Add JWT expiration time (24 hours)
+const JWT_EXPIRATION = '24h';
+
 const strategy = new JwtStrategy(jwtOptions, (jwt_payload, next) => {
   userService.getUserById(jwt_payload._id)
     .then(user => {
@@ -34,6 +37,12 @@ const HTTP_PORT = process.env.PORT || 8080;
 app.use(express.json());
 app.use(cors());
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Internal Server Error' });
+});
+
 // ROUTES
 
 app.post("/api/user/register", (req, res) => {
@@ -41,7 +50,7 @@ app.post("/api/user/register", (req, res) => {
     .then((msg) => {
       res.json({ message: msg });
     }).catch((msg) => {
-      res.status(422).json({ message: msg });
+      res.status(400).json({ message: msg });
     });
 });
 
@@ -52,11 +61,11 @@ app.post("/api/user/login", (req, res) => {
         _id: user._id,
         userName: user.userName
       };
-      const token = jwt.sign(payload, process.env.JWT_SECRET);
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRATION });
       res.json({ message: "login successful", token });
     })
     .catch(msg => {
-      res.status(422).json({ message: msg });
+      res.status(401).json({ message: msg });
     });
 });
 

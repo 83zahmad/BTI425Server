@@ -3,16 +3,45 @@ const bcrypt = require('bcryptjs');
 
 let mongoDBConnectionString = process.env.MONGO_URL;
 
+if (!mongoDBConnectionString) {
+  throw new Error('MONGO_URL environment variable is not set');
+}
+
 let Schema = mongoose.Schema;
 
 let userSchema = new Schema({
     userName: {
         type: String,
-        unique: true
+        unique: true,
+        required: true,
+        trim: true,
+        minlength: 3
     },
-    password: String,
-    favourites: [String],
-    history: [String]
+    password: {
+        type: String,
+        required: true,
+        minlength: 6
+    },
+    favourites: {
+        type: [String],
+        default: [],
+        validate: {
+            validator: function(v) {
+                return v.length <= 50;
+            },
+            message: 'Maximum 50 favourites allowed'
+        }
+    },
+    history: {
+        type: [String],
+        default: [],
+        validate: {
+            validator: function(v) {
+                return v.length <= 50;
+            },
+            message: 'Maximum 50 history items allowed'
+        }
+    }
 });
 
 let User;
@@ -137,8 +166,12 @@ module.exports.getHistory = function (id) {
 
 module.exports.addHistory = function (id, historyId) {
     return new Promise(function (resolve, reject) {
+        if (!id || !historyId) {
+            return reject('Invalid id or historyId');
+        }
+
         User.findById(id).exec().then(user => {
-            if (user.favourites.length < 50) {
+            if (user.history.length < 50) {
                 User.findByIdAndUpdate(id,
                     { $addToSet: { history: historyId } },
                     { new: true }
@@ -146,7 +179,7 @@ module.exports.addHistory = function (id, historyId) {
                     .then(user => { resolve(user.history); })
                     .catch(err => { reject(`Unable to update history for user with id: ${id}`); });
             } else {
-                reject(`Unable to update history for user with id: ${id}`);
+                reject(`Maximum history limit reached for user with id: ${id}`);
             }
         });
     });
